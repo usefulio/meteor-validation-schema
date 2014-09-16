@@ -24,7 +24,12 @@ Schema.applyConstructorToChildren = function (schema) {
 				childSchema = a;
 			} else if (
 				(a.schema && typeof a.schema == 'object') ||
-				(a.rules && typeof (a.rules == 'object' || typeof a.rules == 'function'))
+				(typeof a.rules == 'function') ||
+				(a.rules && typeof a.rules == 'object') ||
+				(typeof a.arrayRules == 'function') ||
+				(a.arrayRules && typeof a.arrayRules == 'object') ||
+				(typeof a.dictRules == 'function') ||
+				(a.dictRules && typeof a.dictRules == 'object')
 				) {
 				// we treat this as a child schema definition
 
@@ -113,23 +118,32 @@ Schema.errorsForArray = function (value, context, path, shortCircut) {
 
 	var errors = [];
 
-	// XXX perform array level validation. The arrayRules property contains
-	// rules which should be run against the array as a whole. (the rules
-	// property contains rules which will be run against each array element)
-
-	if (!_.isArray(value)) {
+	if (!_.isNull(value) && !_.isUndefined(value) && !_.isArray(value)) {
 		errors.push(this.makeError({
-			errorMessage: "must be an array"
+			message: "must be an array"
 			, statusCode: 400
-		}));
+		}, path));
 		return errors;
 	}
-	_.find(value, function (item, key) {
+
+	_.each((new Rule(this.arrayRules)).errors(value, context, path, shortCircut), function (e) {
+		errors.push(e);
+	});
+
+	if (shortCircut && errors.length) return errors;
+
+	if (_.isArray(value)) _.find(value, function (item, key) {
+
+		// we add one to the key (presumably the array index) to make it more
+		// human friendly
+		var itemLabel = key;
+		if (typeof itemLabel == 'number') itemLabel++;
+
 		_.each(Schema.prototype.errors.call(
 			self
 			, item
 			, context
-			, path.concat("#" + key)
+			, path.concat("#" + itemLabel)
 			, shortCircut
 			), function (e) {
 			errors.push(e);

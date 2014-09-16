@@ -152,6 +152,40 @@ Tinytest.add('Schema - property schemas - accepts raw schema', function (test) {
 	test.equal(schema.errors({child:{}})[0].message, 'contact child name is invalid');
 });
 
+Tinytest.add('Schema - property schemas - does not incorrectly create raw schema', function (test) {
+	var schema = function (a) {
+		a.name = function (value) {return !!value;};
+		return new Schema({
+			name: "name"
+			, schema: {
+				child: a
+			}
+		});
+	};
+	var testObject = {
+		child: {
+			name: false
+		}
+	};
+	var arrayTestObject = {
+		child: [
+
+		]
+	};
+
+	test.isFalse(schema({}).match(testObject));
+
+	test.isTrue(schema({rules: []}).match(testObject));
+	test.isTrue(schema({rules: {}}).match(testObject));
+	test.isTrue(schema({rules: function () {return true;}}).match(testObject));
+	test.isTrue(schema({schema: {}}).match(testObject));
+	test.isTrue(schema({arrayRules: {}}).match(arrayTestObject));
+	test.isTrue(schema({arrayRules: []}).match(arrayTestObject));
+	test.isTrue(schema({arrayRules: function () {return true;}}).match(arrayTestObject));
+	test.isTrue(schema({dictRules: {}}).match(testObject));
+	test.isTrue(schema({dictRules: []}).match(testObject));
+	test.isTrue(schema({dictRules: function () {return true;}}).match(testObject));
+});
 Tinytest.add('Schema - property schemas - raw schema returns correct errors', function (test) {
 	var schema = new Schema({
 		name: 'contact'
@@ -163,4 +197,90 @@ Tinytest.add('Schema - property schemas - raw schema returns correct errors', fu
 	});
 
 	test.equal(schema.errors({child:{}})[0].reason, 'contact child name is required');
+});
+
+Tinytest.add('Schema - array schemas - processes child schemas', function (test) {
+	var schema = new Schema({
+		name: 'contact'
+		, schema: {
+			children: {
+				isArray: true
+				, schema: {
+					name: {
+						rules: function (value) {return !!value;}
+					}
+				}
+			}
+		}
+	});
+
+	test.equal(schema.errors({children: [
+		{}
+	]})[0].message
+	, 'contact children #1 name is invalid');
+});
+
+Tinytest.add('Schema - array schemas - processes child rules', function (test) {
+	var schema = new Schema({
+		name: 'contact'
+		, schema: {
+			children: {
+				isArray: true
+				, rules: function (a) {return !!a;}
+			}
+		}
+	});
+
+	test.equal(schema.errors({children: [
+		null
+	]})[0].message
+	, 'contact children #1 is invalid');
+});
+
+Tinytest.add('Schema - array schemas - processes arrayRules rules', function (test) {
+	var schema = new Schema({
+		name: 'contact'
+		, schema: {
+			children: {
+				isArray: true
+				, arrayRules: function (a) {return a.length > 0;}
+			}
+		}
+	});
+
+	test.equal(schema.errors({children:[]})[0].message, 'contact children is invalid');
+});
+
+Tinytest.add('Schema - array schemas - checks is array', function (test) {
+	var schema = new Schema({
+		name: 'contact'
+		, schema: {
+			children: {
+				isArray: true
+				, arrayRules: function (a) {return a.length > 0;}
+			}
+		}
+	});
+
+	test.equal(schema.errors({children:{}})[0].reason, 'contact children must be an array');
+	test.equal(schema.errors({children:' '})[0].reason, 'contact children must be an array');
+	test.equal(schema.errors({children:1})[0].reason, 'contact children must be an array');
+	test.equal(schema.errors({children:function () {}})[0].reason, 'contact children must be an array');
+});
+
+Tinytest.add('Schema - array schemas - correctly handles falsy values', function (test) {
+	var schema = new Schema({
+		name: 'contact'
+		, schema: {
+			children: {
+				isArray: true
+				, arrayRules: []
+			}
+		}
+	});
+
+	test.isTrue(schema.match({}));
+	test.isTrue(schema.match({children:null}));
+	test.equal(schema.errors({children:''})[0].reason, 'contact children must be an array');
+	test.equal(schema.errors({children:0})[0].reason, 'contact children must be an array');
 });

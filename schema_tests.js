@@ -375,9 +375,28 @@ Tinytest.add('Schema - dict schemas - correctly handles falsy values', function 
 	test.equal(schema.errors({children:0})[0].reason, 'contact children must be a dictionary');
 });
 
-// XXX implement and test toArray and toDictionary methods of Schema object
+// XXX implement and test toArraySchema and toDictionarySchema methods of Schema object
 // these methods convert a schema which validates a single object into a schema
 // which validates an array of those objects
+
+// XXX also visa versa for the above methods: we need to add a toItemSchema method
+
+// XXX implement and test default context when running validation tests
+// the default context should always be an object with the following keys:
+// schema: the schema object who's errors function is calling the validation rule
+// rule: the rule object currently being executed
+// item: the object being validated
+// value: the value being validated
+
+// XXX we need to update the schema api to be more consistent about the way it
+// returns errors.
+// errors should return objects like so: 
+// {
+//   message: 'schema field is invalid'
+//   , statusCode: 400
+// }
+// (this way all objects returned by the errors object are consistent)
+// check should only throw meteor errors on the server
 
 Tinytest.add('Schema - big complex schema', function (test) {
 	var required = new Rule(function (value) {

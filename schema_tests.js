@@ -179,9 +179,15 @@ Tinytest.add('Schema - property schemas - does not incorrectly create raw schema
 	test.isTrue(schema({rules: {}}).match(testObject));
 	test.isTrue(schema({rules: function () {return true;}}).match(testObject));
 	test.isTrue(schema({schema: {}}).match(testObject));
+	test.isFalse(schema({isArray: {}}).match(arrayTestObject));
+	test.isTrue(schema({isArray: false}).match(arrayTestObject));
+	test.isTrue(schema({isArray: true}).match(arrayTestObject));
 	test.isTrue(schema({arrayRules: {}}).match(arrayTestObject));
 	test.isTrue(schema({arrayRules: []}).match(arrayTestObject));
 	test.isTrue(schema({arrayRules: function () {return true;}}).match(arrayTestObject));
+	test.isFalse(schema({isDict: {}}).match(testObject));
+	test.isTrue(schema({isDict: false}).match(testObject));
+	test.isTrue(schema({isDict: true}).match(testObject));
 	test.isTrue(schema({dictRules: {}}).match(testObject));
 	test.isTrue(schema({dictRules: []}).match(testObject));
 	test.isTrue(schema({dictRules: function () {return true;}}).match(testObject));
@@ -257,7 +263,7 @@ Tinytest.add('Schema - array schemas - checks is array', function (test) {
 		, schema: {
 			children: {
 				isArray: true
-				, arrayRules: function (a) {return a.length > 0;}
+				, arrayRules: []
 			}
 		}
 	});
@@ -283,4 +289,231 @@ Tinytest.add('Schema - array schemas - correctly handles falsy values', function
 	test.isTrue(schema.match({children:null}));
 	test.equal(schema.errors({children:''})[0].reason, 'contact children must be an array');
 	test.equal(schema.errors({children:0})[0].reason, 'contact children must be an array');
+});
+
+Tinytest.add('Schema - dict schemas - processes child schemas', function (test) {
+	var schema = new Schema({
+		name: 'contact'
+		, schema: {
+			children: {
+				isDict: true
+				, schema: {
+					name: {
+						rules: function (value) {return !!value;}
+					}
+				}
+			}
+		}
+	});
+
+	test.equal(schema.errors({children: {
+		joe: {}
+	}})[0].message
+	, 'contact children #joe name is invalid');
+});
+
+Tinytest.add('Schema - dict schemas - processes child rules', function (test) {
+	var schema = new Schema({
+		name: 'contact'
+		, schema: {
+			children: {
+				isDict: true
+				, rules: function (a) {return !!a;}
+			}
+		}
+	});
+
+	test.equal(schema.errors({children: {
+		joe: null
+	}})[0].message
+	, 'contact children #joe is invalid');
+});
+
+Tinytest.add('Schema - dict schemas - processes dictRules rules', function (test) {
+	var schema = new Schema({
+		name: 'contact'
+		, schema: {
+			children: {
+				isDict: true
+				, dictRules: function (a) {return _.keys(a) > 0;}
+			}
+		}
+	});
+
+	test.equal(schema.errors({children:{}})[0].message, 'contact children is invalid');
+});
+
+Tinytest.add('Schema - dict schemas - checks is dict', function (test) {
+	var schema = new Schema({
+		name: 'contact'
+		, schema: {
+			children: {
+				isDict: true
+				, dictRules: []
+			}
+		}
+	});
+
+	test.equal(schema.errors({children:' '})[0].reason, 'contact children must be a dictionary');
+	test.equal(schema.errors({children:1})[0].reason, 'contact children must be a dictionary');
+});
+
+Tinytest.add('Schema - dict schemas - correctly handles falsy values', function (test) {
+	var schema = new Schema({
+		name: 'contact'
+		, schema: {
+			children: {
+				isDict: true
+				, dictRules: []
+			}
+		}
+	});
+
+	test.isTrue(schema.match({}));
+	test.isTrue(schema.match({children:null}));
+	test.equal(schema.errors({children:''})[0].reason, 'contact children must be a dictionary');
+	test.equal(schema.errors({children:0})[0].reason, 'contact children must be a dictionary');
+});
+
+// XXX implement and test toArray and toDictionary methods of Schema object
+// these methods convert a schema which validates a single object into a schema
+// which validates an array of those objects
+
+Tinytest.add('Schema - big complex schema', function (test) {
+	var required = new Rule(function (value) {
+		return !(_.isNull(value) || _.isUndefined(value) || value === '');
+	}, 400, 'is required');
+	var minLength = function (length) {
+		return new Rule(function (value) {
+			return !value || value.length >= length;
+		}, 400, 'must be a minimum of ' + length + ' long');
+	};
+	var maxLength = function (length) {
+		return new Rule(function (value) {
+			return !value || value.length <= length;
+		}, 400, 'may be a maximum of ' + length + ' long');
+	};
+	var number = new Rule(function (value) {
+		return _.isNumber(value) || _.isUndefined(value);
+	}, 400, 'must be a number');
+	var person = new Schema({
+		name: 'person'
+		, rules: [
+			new Rule(function (value) {
+				return value.age > 55 ? !!value.ssn : true;
+			}, 400, 'people over 55 must have a social security number')
+			, new Rule(function (value) {
+				return value.isCriminal ? !!value.fingerprints : true;
+			}, 400, 'criminals must have fingerprints')
+		]
+		, schema: {
+			name: [required, minLength(10)]
+			, age: [required, number]
+			, ssn: [number]
+			, isCriminal: [required]
+			, fingerprints: [minLength(100)]
+		}
+	});
+
+	var contact = new Schema({
+		name: 'contact card'
+		, schema: {
+			name: [required]
+			, friends: {
+				arrayRules: maxLength(5)
+				, rules: person.rules
+				, schema: person.schema
+			}
+			, family: {
+				isDict: true
+				, rules: person.rules
+				, schema: person.schema
+			}
+			, enemies: {
+				isArray: true
+			}
+		}
+	});
+
+	var messyContact = {
+		name: 'Joe Jones'
+		, friends: [
+			{
+				name: 'short'
+				, age: 10
+				, isCriminal: false
+			}
+			, {
+				name: 'Joseph Ohlman'
+				, age: 10
+				, isCriminal: false
+			}
+			, {
+				name: 'Mr. Criminal in disguise'
+				, age: 10
+			}
+			, {
+				name: 'Mr. Criminal in jail'
+				, age: 10
+				, isCriminal: true
+				, fingerprints: Random.id()
+			}
+			, {
+				name: 'Mr. Criminal in jail'
+				, age: 10
+				, isCriminal: true
+				, fingerprints: Random.id(100)
+			}
+			, {
+				name: 'Mr. Criminal in jail'
+				, isCriminal: false
+			}
+		]
+		, family: {
+			'wife': {
+				name: 'Mrs. Joe Jones'
+				, isCriminal: false
+				, age: 20
+			}
+			, 'kid': {
+				name: 'Joe Jones, Jr.'
+				, isCriminal: false
+				, age: 2
+			}
+			, 'other kid': {
+				isCriminal: false
+				, age: 'three'
+			}
+			, 'dad': {
+				name: 'Mr. Joe Jones, Sr.'
+				, age: 60
+			}
+		}
+		, enemies: {
+			'nemesis': {
+				name: 'my enemy'
+			}
+		}
+	};
+
+	var errors = contact.errors(messyContact);
+
+	var expectedErrors = [
+		'contact card friends may be a maximum of 5 long'
+		, 'contact card friends #1 name must be a minimum of 10 long'
+		, 'contact card friends #3 isCriminal is required'
+		, 'contact card friends #4 fingerprints must be a minimum of 100 long'
+		, 'contact card friends #6 age is required'
+		, 'contact card family #other kid name is required'
+		, 'contact card family #other kid age must be a number'
+		, 'contact card family #dad people over 55 must have a social security number'
+		, 'contact card family #dad isCriminal is required'
+		, 'contact card enemies must be an array'
+	];
+
+	test.equal(errors.length, expectedErrors.length);
+
+	_.each(expectedErrors, function (e, i) {
+			test.equal(e, errors[i].reason);
+		});
 });

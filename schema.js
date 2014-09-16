@@ -29,7 +29,9 @@ Schema.applyConstructorToChildren = function (schema) {
 				(typeof a.arrayRules == 'function') ||
 				(a.arrayRules && typeof a.arrayRules == 'object') ||
 				(typeof a.dictRules == 'function') ||
-				(a.dictRules && typeof a.dictRules == 'object')
+				(a.dictRules && typeof a.dictRules == 'object') ||
+				(_.isBoolean(a.isDict)) ||
+				(_.isBoolean(a.isArray))
 				) {
 				// we treat this as a child schema definition
 
@@ -157,7 +159,47 @@ Schema.errorsForArray = function (value, context, path, shortCircut) {
 };
 
 Schema.errorsForDictionary = function (value, context, path, shortCircut) {
-	// XXX implement this function - same as errorsForArray but specific to
-	// dictionaries. Should validate the value is an object and should run
-	// any dictRules against the value as a whole, see the comment for arrayRules	
+	// Generate a 'path' so errors thrown on child objects make sense
+	if (!path) path = [this.name];
+
+	var self = this;
+
+	var errors = [];
+
+	if (!_.isNull(value) && !_.isUndefined(value) && !_.isObject(value)) {
+		errors.push(this.makeError({
+			message: "must be a dictionary"
+			, statusCode: 400
+		}, path));
+		return errors;
+	}
+
+	_.each((new Rule(this.dictRules)).errors(value, context, path, shortCircut), function (e) {
+		errors.push(e);
+	});
+
+	if (shortCircut && errors.length) return errors;
+
+	if (_.isObject(value)) _.find(value, function (item, key) {
+
+		// we add one to the key (presumably the array index) to make it more
+		// human friendly
+		var itemLabel = key;
+		if (typeof itemLabel == 'number') itemLabel++;
+
+		_.each(Schema.prototype.errors.call(
+			self
+			, item
+			, context
+			, path.concat("#" + itemLabel)
+			, shortCircut
+			), function (e) {
+			errors.push(e);
+		});
+		if (shortCircut && errors.length) {
+			return true;
+		}
+	});
+
+	return errors;
 };

@@ -1,9 +1,11 @@
 {
   "name": "schema",
-  "description": "REPLACEME - What does this package (or the original one you're wrapping) do?",
-  "homepage": "",
-  "author": "Your Name <your@email> (http://yoursite)",
+  "description": "Provides validation for objects, builds on the rules package.",
+  "homepage": "https://github.com/cwohlman/meteor-validation-schema",
+  "author": "Joshua Ohlman <codewriterohs@gmail.com>",
   "version": "0.0.1",
-  "git": "",
-  "packages": {}
+  "git": "https://github.com/cwohlman/meteor-validation-schema.git",
+  "packages": {
+  	"rules": {}
+  }
 }

@@ -31,7 +31,6 @@ It's easy to use the schema package:
 
     - match(value) - returns true if the value passes the schema check
     - errors(value) - returns an array of errors, one for each failed validation check.
-
 4. Schemas handle subdocuments:
 
         var personSchema = new Schema({

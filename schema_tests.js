@@ -94,7 +94,7 @@ Tinytest.add('Schema - correctly throws rules errors', function (test) {
 		}
 	});
 
-	test.equal(schema.errors({name: ''})[0].reason, 'contact name must be a string at least 10 characters long');
+	test.equal(schema.errors({name: ''})[0].message, 'contact name must be a string at least 10 characters long');
 });
 
 Tinytest.add('Schema - property schemas - accepts function', function (test) {
@@ -202,7 +202,7 @@ Tinytest.add('Schema - property schemas - raw schema returns correct errors', fu
 		}
 	});
 
-	test.equal(schema.errors({child:{}})[0].reason, 'contact child name is required');
+	test.equal(schema.errors({child:{}})[0].message, 'contact child name is required');
 });
 
 Tinytest.add('Schema - array schemas - processes child schemas', function (test) {
@@ -268,10 +268,10 @@ Tinytest.add('Schema - array schemas - checks is array', function (test) {
 		}
 	});
 
-	test.equal(schema.errors({children:{}})[0].reason, 'contact children must be an array');
-	test.equal(schema.errors({children:' '})[0].reason, 'contact children must be an array');
-	test.equal(schema.errors({children:1})[0].reason, 'contact children must be an array');
-	test.equal(schema.errors({children:function () {}})[0].reason, 'contact children must be an array');
+	test.equal(schema.errors({children:{}})[0].message, 'contact children must be an array');
+	test.equal(schema.errors({children:' '})[0].message, 'contact children must be an array');
+	test.equal(schema.errors({children:1})[0].message, 'contact children must be an array');
+	test.equal(schema.errors({children:function () {}})[0].message, 'contact children must be an array');
 });
 
 Tinytest.add('Schema - array schemas - correctly handles falsy values', function (test) {
@@ -287,8 +287,8 @@ Tinytest.add('Schema - array schemas - correctly handles falsy values', function
 
 	test.isTrue(schema.match({}));
 	test.isTrue(schema.match({children:null}));
-	test.equal(schema.errors({children:''})[0].reason, 'contact children must be an array');
-	test.equal(schema.errors({children:0})[0].reason, 'contact children must be an array');
+	test.equal(schema.errors({children:''})[0].message, 'contact children must be an array');
+	test.equal(schema.errors({children:0})[0].message, 'contact children must be an array');
 });
 
 Tinytest.add('Schema - dict schemas - processes child schemas', function (test) {
@@ -354,8 +354,8 @@ Tinytest.add('Schema - dict schemas - checks is dict', function (test) {
 		}
 	});
 
-	test.equal(schema.errors({children:' '})[0].reason, 'contact children must be a dictionary');
-	test.equal(schema.errors({children:1})[0].reason, 'contact children must be a dictionary');
+	test.equal(schema.errors({children:' '})[0].message, 'contact children must be a dictionary');
+	test.equal(schema.errors({children:1})[0].message, 'contact children must be a dictionary');
 });
 
 Tinytest.add('Schema - dict schemas - correctly handles falsy values', function (test) {
@@ -371,8 +371,8 @@ Tinytest.add('Schema - dict schemas - correctly handles falsy values', function 
 
 	test.isTrue(schema.match({}));
 	test.isTrue(schema.match({children:null}));
-	test.equal(schema.errors({children:''})[0].reason, 'contact children must be a dictionary');
-	test.equal(schema.errors({children:0})[0].reason, 'contact children must be a dictionary');
+	test.equal(schema.errors({children:''})[0].message, 'contact children must be a dictionary');
+	test.equal(schema.errors({children:0})[0].message, 'contact children must be a dictionary');
 });
 
 // XXX implement and test toArraySchema and toDictionarySchema methods of Schema object
@@ -533,6 +533,6 @@ Tinytest.add('Schema - big complex schema', function (test) {
 	test.equal(errors.length, expectedErrors.length);
 
 	_.each(expectedErrors, function (e, i) {
-			test.equal(e, errors[i].reason);
+			test.equal(errors[i].message, e);
 		});
 });

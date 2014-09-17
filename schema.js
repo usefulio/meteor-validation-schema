@@ -112,6 +112,10 @@ Schema.prototype.errors = function(value, context, path, shortCircut) {
 	return errors;
 };
 
+Schema.mustBeArray = new Rule(function (value) {
+	return !(!_.isNull(value) && !_.isUndefined(value) && !_.isArray(value));
+}, 'must be an array');
+
 Schema.errorsForArray = function (value, context, path, shortCircut) {
 	// Generate a 'path' so errors thrown on child objects make sense
 	if (!path) path = [this.name];
@@ -120,15 +124,9 @@ Schema.errorsForArray = function (value, context, path, shortCircut) {
 
 	var errors = [];
 
-	if (!_.isNull(value) && !_.isUndefined(value) && !_.isArray(value)) {
-		errors.push(this.makeError({
-			message: "must be an array"
-			, statusCode: 400
-		}, path));
-		return errors;
-	}
+	var rules = [Schema.mustBeArray].concat(this.arrayRules);
 
-	_.each((new Rule(this.arrayRules)).errors(value, context, path, shortCircut), function (e) {
+	_.each((new Rule(rules)).errors(value, context, path, shortCircut), function (e) {
 		errors.push(e);
 	});
 
@@ -158,6 +156,10 @@ Schema.errorsForArray = function (value, context, path, shortCircut) {
 	return errors;
 };
 
+Schema.mustBeDictionary = new Rule(function (value) {
+	return !(!_.isNull(value) && !_.isUndefined(value) && !_.isObject(value));
+}, 'must be a dictionary');
+
 Schema.errorsForDictionary = function (value, context, path, shortCircut) {
 	// Generate a 'path' so errors thrown on child objects make sense
 	if (!path) path = [this.name];
@@ -166,15 +168,7 @@ Schema.errorsForDictionary = function (value, context, path, shortCircut) {
 
 	var errors = [];
 
-	if (!_.isNull(value) && !_.isUndefined(value) && !_.isObject(value)) {
-		errors.push(this.makeError({
-			message: "must be a dictionary"
-			, statusCode: 400
-		}, path));
-		return errors;
-	}
-
-	_.each((new Rule(this.dictRules)).errors(value, context, path, shortCircut), function (e) {
+	_.each((new Rule([Schema.mustBeDictionary].concat(this.dictRules))).errors(value, context, path, shortCircut), function (e) {
 		errors.push(e);
 	});
 

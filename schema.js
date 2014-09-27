@@ -112,6 +112,30 @@ Schema.prototype.errors = function(value, context, path, shortCircut) {
 	return errors;
 };
 
+Schema.prototype.toArraySchema = function () {
+	return new Schema({
+		name: this.name
+		, rules: this.rules
+		, schema: this.schema
+		, isArray: true
+	});
+};
+
+Schema.prototype.toDictSchema = function () {
+	return new Schema({
+		name: this.name
+		, rules: this.rules
+		, schema: this.schema
+		, isDict: true
+	});
+};
+Schema.prototype.toItemSchema = function () {
+	return new Schema({
+		name: this.name
+		, rules: this.rules
+		, schema: this.schema
+	});
+};
 Schema.mustBeArray = new Rule(function (value) {
 	return !(!_.isNull(value) && !_.isUndefined(value) && !_.isArray(value));
 }, 'must be an array');

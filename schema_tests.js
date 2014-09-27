@@ -375,6 +375,65 @@ Tinytest.add('Schema - dict schemas - correctly handles falsy values', function 
 	test.equal(schema.errors({children:0})[0].message, 'contact children must be a dictionary');
 });
 
+Tinytest.add('Schema - array schemas - provides toArraySchema function', function (test) {
+	var rule = _.isString;
+	var schema = new Schema({
+		schema: {
+			name: rule
+		}
+	});
+
+	test.isTrue(schema.match({name: 'Joe'}));
+	test.isFalse(schema.match([{name: 'Joe'}]));
+
+	test.isFalse(schema.toArraySchema().match({name: 'Joe'}));
+	test.isTrue(schema.toArraySchema().match([{name: 'Joe'}]));
+});
+
+Tinytest.add('Schema - dict schemas - provides toDictSchema function', function (test) {
+	var rule = _.isString;
+	var schema = new Schema({
+		schema: {
+			name: rule
+		}
+	});
+
+	test.isTrue(schema.match({name: 'Joe'}));
+	test.isFalse(schema.match({joe: {name: 'Joe'}}));
+
+	test.isFalse(schema.toDictSchema().match({name: 'Joe'}));
+	test.isTrue(schema.toDictSchema().match({joe: {name: 'Joe'}}));
+});
+
+Tinytest.add('Schema - dict schemas - provides toItemSchema function', function (test) {
+	var rule = _.isString;
+	var schema = new Schema({
+		schema: {
+			name: rule
+		}
+		, isArray: true
+	});
+
+	test.isFalse(schema.match({name: 'Joe'}));
+	test.isTrue(schema.match([{name: 'Joe'}]));
+
+	test.isTrue(schema.toItemSchema().match({name: 'Joe'}));
+	test.isFalse(schema.toItemSchema().match([{name: 'Joe'}]));
+
+	schema = new Schema({
+		schema: {
+			name: rule
+		}
+		, isDict: true
+	});
+
+	test.isFalse(schema.match({name: 'Joe'}));
+	test.isTrue(schema.match({joe: {name: 'Joe'}}));
+
+	test.isTrue(schema.toItemSchema().match({name: 'Joe'}));
+	test.isFalse(schema.toItemSchema().match({joe: {name: 'Joe'}}));
+});
+
 // XXX implement and test toArraySchema and toDictionarySchema methods of Schema object
 // these methods convert a schema which validates a single object into a schema
 // which validates an array of those objects

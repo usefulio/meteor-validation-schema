@@ -1,10 +1,11 @@
 Package.describe({
   summary: "Provides validation for objects, builds on the rules package."
   , version: '0.0.1'
+  , name: "cwohlman:schema"
 });
 
 Package.on_use(function (api, where) {
-  api.use('rules');
+  api.use('cwohlman:rules');
   api.use('underscore');
 
   api.add_files('schema.js', ['client', 'server']);
@@ -13,7 +14,7 @@ Package.on_use(function (api, where) {
 });
 
 Package.on_test(function (api) {
-  api.use(['schema', 'rules', 'tinytest', 'test-helpers']);
+  api.use(['cwohlman:schema', 'cwohlman:rules', 'tinytest', 'test-helpers']);
 
   api.add_files('schema_tests.js', ['client', 'server']);
 });

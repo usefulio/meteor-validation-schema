@@ -1,6 +1,6 @@
 Package.describe({
   summary: "Provides validation for objects, builds on the rules package."
-  , version: '0.0.1'
+  , version: '0.1.0'
   , name: "cwohlman:schema"
 });
 

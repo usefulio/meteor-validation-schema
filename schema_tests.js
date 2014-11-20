@@ -449,7 +449,7 @@ Tinytest.add('Schema - dict schemas - provides toItemSchema function', function 
 
 // XXX we need to update the schema api to be more consistent about the way it
 // returns errors.
-// errors should return objects like so: 
+// errors should return objects like so:
 // {
 //   message: 'schema field is invalid'
 //   , statusCode: 400
@@ -594,4 +594,19 @@ Tinytest.add('Schema - big complex schema', function (test) {
 	_.each(expectedErrors, function (e, i) {
 			test.equal(errors[i].message, e);
 		});
+});
+
+Tinytest.add('Schema - passes context to child validators', function (test) {
+	var id = Random.id();
+	var schema = new Schema({
+		schema: {
+			name: function () {return this.name === id;}
+			, child: {
+				name: function () {return this.name === id;}
+			}
+		}
+	});
+	var errors = schema.errors({name: id});
+
+	test.equal(errors.length, 0);
 });

@@ -35,7 +35,7 @@ Schema.applyConstructorToChildren = function (schema) {
 				) {
 				// we treat this as a child schema definition
 
-				// it's intersting to note that if the user intended to 
+				// it's intersting to note that if the user intended to
 				// define a rule object here that will still work because of
 				// the close link between the rule and schema apis
 
@@ -66,7 +66,7 @@ Schema.applyConstructorToChildren = function (schema) {
 				rules: a
 			});
 		} else {
-			// we don't want to simply erase this schema object, it might 
+			// we don't want to simply erase this schema object, it might
 			childSchema = new Schema({
 				_invalidSchema: true
 				, _developerNotes: a
@@ -82,12 +82,12 @@ Schema.applyConstructorToChildren = function (schema) {
 // We want to implement the same api as the rule object
 Schema.prototype = _.clone(Rule.prototype);
 
-// The rule object only has one fundemental 
+// The rule object only has one fundemental
 Schema.prototype.errors = function(value, context, path, shortCircut) {
 	// Generate a 'path' so errors thrown on child objects make sense
 	if (!path) path = [this.name];
 	if (!_.isArray(path)) path = [path];
-
+	if (!context) context = value;
 	// Start with any item level validations.
 	var errors = Rule.prototype.errors.call(this, value, context, path, shortCircut);
 
